@@ -1,5 +1,3 @@
-
-
 let todos = [];
 const status = ["offen", "in Bearbeitung", "erledigt"];
 
@@ -13,9 +11,9 @@ function createTodoElement(todo) {
            <div class="title">${todo.title}</div> 
            <div class="due">${due.toLocaleDateString()}</div>
            <div class="actions">
-              <button class="status" onclick="changeStatus(${todo._id})">${status[todo.status || 0]}</button>
-              <button class="edit" onclick="editTodo(${todo._id})">Bearbeiten</button>
-              <button class="delete" onclick="deleteTodo(${todo._id})">Löschen</button>
+              <button class="status" onclick="changeStatus('${todo._id}')">${status[todo.status || 0]}</button>
+              <button class="edit" onclick="editTodo('${todo._id}')">Bearbeiten</button>
+              <button class="delete" onclick="deleteTodo('${todo._id}')">Löschen</button>
            </div>
          </div>`);
 
@@ -62,19 +60,19 @@ async function init() {
 function saveTodo(evt) {
     evt.preventDefault();
 
-    // Get the id from the form. If it is not set, we are creating a new todo.
-    let _id = Number.parseInt(evt.target.dataset.id) || Date.now();
+    // Get the id from the form if present (for updates)
+    let _id = evt.target.dataset.id ? Number.parseInt(evt.target.dataset.id) : null;
 
+    // Create the todo object
     let todo = {
-        _id,
         title: evt.target.title.value,
         due: evt.target.due.valueAsDate,
         status: Number.parseInt(evt.target.status.value) || 0
-    }
+    };
 
-    // Save the todo
-    let index = todos.findIndex(t => t._id === _id);
-    if (index >= 0) {
+    // If _id is present, this is an update
+    if (_id) {
+        todo._id = _id; // Add the ID only for updates
         console.log("Updating todo: %o", todo);
         fetch(API + "/" + _id, {
             method: "PUT",
@@ -86,12 +84,16 @@ function saveTodo(evt) {
             .then(checkLogin)
             .then(response => response.json())
             .then(response => {
-                console.log("PUT %s: %o", API + "/" + _id, response)
-                todos[index] = response
-                showTodos()
-                return todos
+                console.log("PUT %s: %o", API + "/" + _id, response);
+                let index = todos.findIndex(t => t._id === _id);
+                if (index >= 0) {
+                    todos[index] = response;
+                }
+                showTodos();
+                return todos;
             })
     } else {
+        // Create new todo (without an ID)
         console.log("Saving new todo: %o", todo);
         fetch(API, {
             method: "POST",
@@ -103,14 +105,15 @@ function saveTodo(evt) {
             .then(checkLogin)
             .then(response => response.json())
             .then(response => {
-                console.log("POST %s: %o", API, response)
-                todos.push(response)
-                showTodos()
-                return todos
+                console.log("POST %s: %o", API, response);
+                todos.push(response); // The response should contain the new todo with its ID
+                showTodos();
+                return todos;
             })
     }
     evt.target.reset();
 }
+
 
 function editTodo(id) {
     let todo = todos.find(t => t._id === id);

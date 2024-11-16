@@ -269,23 +269,27 @@ app.put('/todos/:id', authenticate,
  *     '500':
  *       description: Serverfehler
  */
-app.post('/todos', authenticate,
-    async (req, res) => {
-        let todo = req.body;
-        if (!todo) {
-            res.sendStatus(400, { message: "Todo fehlt" });
-            return;
-        }
-        return db.insert(todo)
-            .then(todo => {
-                res.status(201).send(todo);
-            })
-            .catch(err => {
-                console.log(err);
-                res.sendStatus(500);
-            });
+app.post('/todos', authenticate, async (req, res) => {
+    const { title, due, status, ...extraFields } = req.body;
+
+    // Validierung der erforderlichen Felder
+    if (!title || !due || typeof status !== 'number') {
+        return res.status(400).json({ error: "Bad Request", message: "Ungültige oder fehlende Felder im Todo" });
     }
-);
+
+    // Überprüfung auf unerwartete Felder
+    if (Object.keys(extraFields).length > 0) {
+        return res.status(400).json({ error: "Bad Request", message: "Unerwartete Felder im Todo-Objekt" });
+    }
+
+    try {
+        const todo = await db.insert({ title, due, status });
+        return res.status(201).send(todo);
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Internal Server Error", message: "Fehler beim Erstellen des Todos" });
+    }
+});
 
 /** Delete a todo by id.
  * @swagger
