@@ -9,7 +9,7 @@ function createTodoElement(todo) {
     list.insertAdjacentHTML("beforeend",
         `<div class="todo" id="todo-${todo._id}">
            <div class="title">${todo.title}</div> 
-           <div class="due">${due.toLocaleDateString()}</div>
+           <div class="due">${due.toLocaleDateString(('de-DE'))}</div>
            <div class="actions">
               <button class="status" onclick="changeStatus('${todo._id}')">${status[todo.status || 0]}</button>
               <button class="edit" onclick="editTodo('${todo._id}')">Bearbeiten</button>
@@ -57,23 +57,28 @@ async function init() {
     showTodos();
 }
 
+
 function saveTodo(evt) {
     evt.preventDefault();
 
-    // Get the id from the form if present (for updates)
-    let _id = evt.target.dataset.id ? Number.parseInt(evt.target.dataset.id) : null;
+    // Get the id from the form. If it is not set, we are creating a new todo.
+    let _id = evt.target.dataset.id ? evt.target.dataset.id : null;
+    console.log(_id);
+    console.log(evt.target.dataset.id);
 
-    // Create the todo object
     let todo = {
         title: evt.target.title.value,
         due: evt.target.due.valueAsDate,
         status: Number.parseInt(evt.target.status.value) || 0
     };
 
-    // If _id is present, this is an update
-    if (_id) {
-        todo._id = _id; // Add the ID only for updates
+    // Save the todo
+    let index = todos.findIndex(t => t._id === _id);
+
+    if (_id && index >= 0) {
+        // Update existing todo
         console.log("Updating todo: %o", todo);
+        console.log("Updating todo: %o", _id);
         fetch(API + "/" + _id, {
             method: "PUT",
             headers: {
@@ -81,19 +86,16 @@ function saveTodo(evt) {
             },
             body: JSON.stringify(todo)
         })
-            .then(checkLogin)
-            .then(response => response.json())
-            .then(response => {
-                console.log("PUT %s: %o", API + "/" + _id, response);
-                let index = todos.findIndex(t => t._id === _id);
-                if (index >= 0) {
-                    todos[index] = response;
-                }
-                showTodos();
-                return todos;
-            })
+        .then(checkLogin)
+        .then(response => response.json())
+        .then(response => {
+            console.log("PUT %s: %o", API + "/" + _id, response);
+            todos[index] = response;
+            showTodos();
+            return todos;
+        });
     } else {
-        // Create new todo (without an ID)
+        // Create new todo
         console.log("Saving new todo: %o", todo);
         fetch(API, {
             method: "POST",
@@ -102,16 +104,17 @@ function saveTodo(evt) {
             },
             body: JSON.stringify(todo)
         })
-            .then(checkLogin)
-            .then(response => response.json())
-            .then(response => {
-                console.log("POST %s: %o", API, response);
-                todos.push(response); // The response should contain the new todo with its ID
-                showTodos();
-                return todos;
-            })
+        .then(checkLogin)
+        .then(response => response.json())
+        .then(response => {
+            console.log("POST %s: %o", API, response);
+            todos.push(response);
+            showTodos();
+            return todos;
+        });
     }
     evt.target.reset();
+    evt.target.dataset.id = ''; // Zurücksetzen der ID nach dem Speichern
 }
 
 
@@ -124,9 +127,10 @@ function editTodo(id) {
         form.due.valueAsDate = new Date(todo.due);
         form.status.value = todo.status;
         form.submit.value = "Änderungen speichern";
-        form.dataset._id = todo._id;
+        form.dataset.id = todo._id; // Verwenden Sie `dataset.id` anstelle von `dataset._id`
     }
 }
+
 
 function deleteTodo(id) {
     let todo = todos.find(t => t._id === id);
