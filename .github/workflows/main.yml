@@ -1,0 +1,36 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:4.4
+        ports:
+          - 27017:27017
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16' # Ändern Sie dies, falls Sie eine andere Node.js-Version verwenden
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Tests
+        env:
+          MONGO_URL: mongodb://localhost:27017/testdb # Beispiel für eine Umgebungsvariable, falls benötigt
+        run: npm test # Passen Sie den Befehl an, falls Sie z.B. separate Tests haben (npm run test:backend, npm run test:frontend)
