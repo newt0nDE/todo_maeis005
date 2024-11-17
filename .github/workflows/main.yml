@@ -24,13 +24,28 @@ jobs:
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
-        with:
-          node-version: '16' # Ändern Sie dies, falls Sie eine andere Node.js-Version verwenden
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          npm install
 
-      - name: Run Tests
-        env:
-          MONGO_URL: mongodb://localhost:27017/testdb # Beispiel für eine Umgebungsvariable, falls benötigt
-        run: npm test # Passen Sie den Befehl an, falls Sie z.B. separate Tests haben (npm run test:backend, npm run test:frontend)
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Run backend tests
+        run: |
+          cd backend
+          npm test
+
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          npm test
+
+      - name: Run Cypress tests
+        run: |
+          cd frontend
+          npx cypress run
