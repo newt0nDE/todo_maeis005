@@ -1,4 +1,4 @@
-describe('Todo App - CRUD Funktionen', () => {
+describe('Todo App - Todo erstellen', () => {
   beforeEach(() => {
       // Besuchen Sie die Anwendung vor jedem Test
       cy.visit('/todo.html'); // Ersetzen Sie diesen Wert mit der tatsächlichen URL
