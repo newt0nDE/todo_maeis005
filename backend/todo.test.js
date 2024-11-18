@@ -5,7 +5,12 @@ import getKeycloakToken from './utils';
 let token; // Speichert den abgerufenen JWT-Token
 
 beforeAll(async () => {
-    token = await getKeycloakToken();
+    try {
+        token = await getKeycloakToken();
+    } catch (error) {
+        console.error('Fehler beim Abrufen des Keycloak-Tokens:', error);
+        token = null; // Setzt einen Standardwert, um den Testablauf nicht zu unterbrechen
+    }
 });
 
 describe('GET /todos', () => {
