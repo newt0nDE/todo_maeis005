@@ -94,6 +94,46 @@ Wenn man jetzt den Github Actions Workflow anstartet kann man in der Weboberflä
 Besonderen Augenmerkt sollte man dabei dann wahrscheinlich auf den Reiter "Security" legen. Zum Glück ist hier nichts aufgefallen.
 
 ### 1.5. Pull-Request im Original Repo erstellen
-Nachdem dann alles funktioniert hat war es an der Zeit meine Ergebnisse samit diesem Bericht als Pull-Request im Original Repo abzugeben und auf gute Note zu hoffen ;).
+Nachdem dann alles funktioniert hat war es an der Zeit meine Ergebnisse samt diesem Bericht als Pull-Request im Original Repo abzugeben und auf gute Note zu hoffen ;).
 
 ## 2. Aufgetretene Probleme und deren Lösungen
+Während der Bearbeitung der Aufgaben und dem anschließenden Test musste ich auch ein paar Fehler im Code korrigieren. Der schwerwiegendste Fehler war die Anpassung der Funktion "createTodoElement()" in todo.js. Hier mussten die Anführungszeichen angepasst werden damit eine korrekte Zwischenspeicherung und Übergabe an das Backend gewährleistet werden kann. Hier die korrekte Version des Codes:
+
+```javascript
+function createTodoElement(todo) {
+    let list = document.getElementById("todo-list");
+    let due = new Date(todo.due);
+    list.insertAdjacentHTML("beforeend",
+        `<div class="todo" id="todo-${todo._id}">
+           <div class="title">${todo.title}</div> 
+           <div class="due">${due.toLocaleDateString(('de-DE'))}</div>
+           <div class="actions">
+              <button class="status" onclick="changeStatus('${todo._id}')">${status[todo.status || 0]}</button>
+              <button class="edit" onclick="editTodo('${todo._id}')">Bearbeiten</button>
+              <button class="delete" onclick="deleteTodo('${todo._id}')">Löschen</button>
+           </div>
+         </div>`);
+}
+```
+
+Außerdem wurden diverse Korrekturen am Backend-Code vorgenommen. Darunter auch die Abschaltung der Keycloak Authentifizierung, da dieser Dienst zum Zeitpunkt der Erstellung dieses Berichts Probleme verursacht hatte.
+
+```javascript
+    try {
+        const response = await axios.post(tokenEndpoint,
+            {
+                'grant_type': 'password',
+                'client_id': keycloakConfig.clientId,
+                'username': 'public',
+                'password': 'todo',
+            },
+            {
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            });
+
+        return response.data.access_token;
+    } catch (error) {
+        console.error('Fehler beim Abrufen des Keycloak-Tokens', error);
+        return null;
+    }
+```
